@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"image"
-	"log"
 	"math"
 	"net"
 	"os"
@@ -11,8 +10,9 @@ import (
 	"time"
 
 	"github.com/bradfitz/rfbgo/rfb"
-
+	"github.com/go-vgo/robotgo"
 	"github.com/kbinani/screenshot"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -128,8 +128,18 @@ func handleConn(c *rfb.Conn) {
 	}()
 
 	for e := range c.Event {
-		log.Printf("got event: %#v", e)
+		// log.Printf("got event: %#v", e)
+		if ev, ok := e.(rfb.KeyEvent); ok {
+			log.Infof("keyboard  key:%d down:%d", ev.Key, ev.DownFlag)
+			robotgo.UnicodeType(ev.Key)
+		}
+		if ev, ok := e.(rfb.PointerEvent); ok {
+			log.Infof("mouse pos %dx%d btn %d", ev.X, ev.Y, ev.ButtonMask)
+			robotgo.MoveMouse(int(ev.X), int(ev.Y))
+		}
+
 	}
+
 	close(closec)
 	log.Printf("Client disconnected")
 }
