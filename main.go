@@ -15,11 +15,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var clickMap = map[uint8]string{}{
-	1: "left",
-	2: "center",
-	4: "right",
-	8: "scrollup",
+var clickMap = map[uint8]string{
+	1:  "left",
+	2:  "center",
+	4:  "right",
+	8:  "scrollup",
 	16: "scrolldown",
 }
 
@@ -91,6 +91,7 @@ func serve() {
 }
 
 func handleConn(c *rfb.Conn) {
+	clickFlag := false
 	if *profile {
 		f, err := os.Create("cpu.prof")
 		if err != nil {
@@ -136,7 +137,7 @@ func handleConn(c *rfb.Conn) {
 	}()
 
 	for e := range c.Event {
-		// log.Printf("got event: %#v", e)
+		log.Infof("got event: %#v", e)
 		if ev, ok := e.(rfb.KeyEvent); ok {
 			log.Infof("keyboard  key:%d down:%d", ev.Key, ev.DownFlag)
 			robotgo.UnicodeType(ev.Key)
@@ -145,10 +146,15 @@ func handleConn(c *rfb.Conn) {
 			log.Infof("mouse pos %dx%d btn %d", ev.X, ev.Y, ev.ButtonMask)
 			robotgo.MoveMouse(int(ev.X), int(ev.Y))
 
-
 			if ev.ButtonMask > 0 {
 
-				robotgo.MouseClick(clickMap[ev.ButtonMask])
+				clickFlag = true
+				log.Infof("mouse clicked mask %s, X %d, Y %d \n", clickMap[ev.ButtonMask], ev.X, ev.Y)
+				robotgo.MouseClick(clickMap[ev.ButtonMask], true)
+			}
+			if ev.ButtonMask == 0 && clickFlag {
+				clickFlag = false
+				robotgo.MouseClick(clickMap[ev.ButtonMask], false)
 			}
 		}
 
