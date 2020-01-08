@@ -15,6 +15,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var clickMap = map[uint8]string{}{
+	1: "left",
+	2: "center",
+	4: "right",
+	8: "scrollup",
+	16: "scrolldown",
+}
+
 func main() {
 	serve()
 }
@@ -136,6 +144,12 @@ func handleConn(c *rfb.Conn) {
 		if ev, ok := e.(rfb.PointerEvent); ok {
 			log.Infof("mouse pos %dx%d btn %d", ev.X, ev.Y, ev.ButtonMask)
 			robotgo.MoveMouse(int(ev.X), int(ev.Y))
+
+
+			if ev.ButtonMask > 0 {
+
+				robotgo.MouseClick(clickMap[ev.ButtonMask])
+			}
 		}
 
 	}
