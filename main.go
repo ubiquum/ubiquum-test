@@ -85,13 +85,16 @@ func serve() {
 		err = s.Serve(ln)
 		log.Fatalf("rfb server ended with: %v", err)
 	}()
+	log.Infof("Waiting for connection on port 5900\n")
+
 	for c := range s.Conns {
 		handleConn(c)
 	}
 }
 
 func handleConn(c *rfb.Conn) {
-	clickFlag := false
+
+	//clickFlag := false
 	if *profile {
 		f, err := os.Create("cpu.prof")
 		if err != nil {
@@ -125,6 +128,7 @@ func handleConn(c *rfb.Conn) {
 			case feed <- li:
 				haveNewFrame = false
 			case <-closec:
+				log.Printf("Close conn")
 				return
 			case <-tick.C:
 				slide++
@@ -142,25 +146,28 @@ func handleConn(c *rfb.Conn) {
 			log.Infof("keyboard  key:%d down:%d", ev.Key, ev.DownFlag)
 			robotgo.UnicodeType(ev.Key)
 		}
+
 		if ev, ok := e.(rfb.PointerEvent); ok {
 			log.Infof("mouse pos %dx%d btn %d", ev.X, ev.Y, ev.ButtonMask)
 			robotgo.MoveMouse(int(ev.X), int(ev.Y))
 
 			if ev.ButtonMask > 0 {
-
-				clickFlag = true
-				log.Infof("mouse clicked mask %s, X %d, Y %d \n", clickMap[ev.ButtonMask], ev.X, ev.Y)
 				robotgo.MouseClick(clickMap[ev.ButtonMask], true)
 			}
-			if ev.ButtonMask == 0 && clickFlag {
-				clickFlag = false
-				robotgo.MouseClick(clickMap[ev.ButtonMask], false)
-			}
+			// if ev.ButtonMask > 0 {
+
+			// 	clickFlag = true
+			// 	log.Infof("mouse clicked mask %s, X %d, Y %d \n", clickMap[ev.ButtonMask], ev.X, ev.Y)
+			// 	robotgo.MouseClick(clickMap[ev.ButtonMask], true)
+			// }
+			// if ev.ButtonMask == 0 && clickFlag {
+			// 	clickFlag = false
+			// 	robotgo.MouseClick(clickMap[ev.ButtonMask], false)
+			// }
 		}
-
 	}
+	defer close(closec)
 
-	close(closec)
 	log.Printf("Client disconnected")
 }
 
