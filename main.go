@@ -15,12 +15,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type mouseS struct {
+	clickFlag bool
+	x         uint16
+	y         uint16
+}
+
 var clickMap = map[uint8]string{
 	1:  "left",
 	2:  "center",
 	4:  "right",
 	8:  "scrollup",
 	16: "scrolldown",
+}
+
+var keyboardMap = map[uint32]string{
+	65288: "delete",
 }
 
 func main() {
@@ -94,7 +104,6 @@ func serve() {
 
 func handleConn(c *rfb.Conn) {
 
-	//clickFlag := false
 	if *profile {
 		f, err := os.Create("cpu.prof")
 		if err != nil {
@@ -108,6 +117,8 @@ func handleConn(c *rfb.Conn) {
 		defer pprof.StopCPUProfile()
 		defer log.Printf("stopping profiling CPU")
 	}
+
+	mouse := mouseS{clickFlag: false, x: 0, y: 0}
 
 	im := image.NewRGBA(image.Rect(0, 0, width, height))
 	li := &rfb.LockableImage{Img: im}
@@ -141,29 +152,48 @@ func handleConn(c *rfb.Conn) {
 	}()
 
 	for e := range c.Event {
-		log.Infof("got event: %#v", e)
+		//log.Infof("got event: %#v", e)
 		if ev, ok := e.(rfb.KeyEvent); ok {
 			log.Infof("keyboard  key:%d down:%d", ev.Key, ev.DownFlag)
-			robotgo.UnicodeType(ev.Key)
+			if k, ok := keyboardMap[ev.Key]; ok {
+				log.Infof("keyboard mapped %d", k)
+				if ev.DownFlag == 1 {
+					robotgo.KeyTap(k)
+				}
+			} else {
+				if ev.DownFlag == 1 {
+					robotgo.UnicodeType(ev.Key)
+				}
+			}
 		}
 
 		if ev, ok := e.(rfb.PointerEvent); ok {
-			log.Infof("mouse pos %dx%d btn %d", ev.X, ev.Y, ev.ButtonMask)
 			robotgo.MoveMouse(int(ev.X), int(ev.Y))
+			log.Infof("mouse event buttonMask %d\n", ev.ButtonMask)
 
 			if ev.ButtonMask > 0 {
-				robotgo.MouseClick(clickMap[ev.ButtonMask], true)
+				if !mouse.clickFlag {
+					mouse.clickFlag = true
+					mouse.x = ev.X
+					mouse.y = ev.Y
+				} else {
+					if mouse.x != ev.X || mouse.y != ev.Y {
+						robotgo.MouseToggle("down", "left")
+						mouse.x = ev.X
+						mouse.y = ev.Y
+					}
+				}
+			} else {
+				if mouse.clickFlag {
+					mouse.clickFlag = false
+					if mouse.x != ev.X || mouse.y != ev.Y {
+						robotgo.DragMouse(int(ev.X), int(ev.Y), "left")
+						robotgo.MouseToggle("up", "left")
+					} else {
+						robotgo.MouseClick(clickMap[ev.ButtonMask], false)
+					}
+				}
 			}
-			// if ev.ButtonMask > 0 {
-
-			// 	clickFlag = true
-			// 	log.Infof("mouse clicked mask %s, X %d, Y %d \n", clickMap[ev.ButtonMask], ev.X, ev.Y)
-			// 	robotgo.MouseClick(clickMap[ev.ButtonMask], true)
-			// }
-			// if ev.ButtonMask == 0 && clickFlag {
-			// 	clickFlag = false
-			// 	robotgo.MouseClick(clickMap[ev.ButtonMask], false)
-			// }
 		}
 	}
 	defer close(closec)
