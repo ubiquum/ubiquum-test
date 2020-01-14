@@ -17,6 +17,7 @@ import (
 
 type mouseS struct {
 	clickFlag bool
+	clickType uint8
 	x         uint16
 	y         uint16
 }
@@ -169,11 +170,11 @@ func handleConn(c *rfb.Conn) {
 
 		if ev, ok := e.(rfb.PointerEvent); ok {
 			robotgo.MoveMouse(int(ev.X), int(ev.Y))
-			log.Infof("mouse event buttonMask %d\n", ev.ButtonMask)
 
 			if ev.ButtonMask > 0 {
 				if !mouse.clickFlag {
 					mouse.clickFlag = true
+					mouse.clickType = ev.ButtonMask
 					mouse.x = ev.X
 					mouse.y = ev.Y
 				} else {
@@ -190,7 +191,8 @@ func handleConn(c *rfb.Conn) {
 						robotgo.DragMouse(int(ev.X), int(ev.Y), "left")
 						robotgo.MouseToggle("up", "left")
 					} else {
-						robotgo.MouseClick(clickMap[ev.ButtonMask], false)
+						log.Infof("mouse event buttonMask %v\n", ev)
+						robotgo.MouseClick(clickMap[mouse.clickType], false)
 					}
 				}
 			}
