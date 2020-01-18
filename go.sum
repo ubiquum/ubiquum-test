@@ -46,6 +46,7 @@ github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/ubiquum/ubiquum-test v0.0.0-20200118153130-f637e9749e24 h1:dnp3E/qaD/uqcY5zIwGd/1CjCShWhYI1laDESyepNhg=
 github.com/vcaesar/gops v0.0.0-20190910162627-58ac09d12a53 h1:tYb/9KQi8dTCSDia2NwbuhUbKlaurqC/S7MFQo96nLk=
 github.com/vcaesar/gops v0.0.0-20190910162627-58ac09d12a53/go.mod h1:5txYrXKrQG6ZJYdGIiMVVxiOhbdACnwBcHzIwGQ7Nkw=
 github.com/vcaesar/imgo v0.0.0-20191008162304-a83ea7753bc8 h1:9Y+hoKBYa+UtzGqkODfs8c0Q6gp2UfniVNsHQWghPi0=

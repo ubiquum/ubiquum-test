@@ -13,6 +13,7 @@ import (
 	"github.com/go-vgo/robotgo"
 	"github.com/kbinani/screenshot"
 	log "github.com/sirupsen/logrus"
+	"github.com/ubiquum/ubiquum/keyboard"
 )
 
 type mouseS struct {
@@ -28,10 +29,6 @@ var clickMap = map[uint8]string{
 	4:  "right",
 	8:  "scrollup",
 	16: "scrolldown",
-}
-
-var keyboardMap = map[uint32]string{
-	65288: "delete",
 }
 
 func main() {
@@ -127,7 +124,7 @@ func handleConn(c *rfb.Conn) {
 	closec := make(chan bool)
 	go func() {
 		slide := 0
-		tick := time.NewTicker(time.Second / 30) // X fps
+		tick := time.NewTicker(time.Second / 10) // X fps
 		defer tick.Stop()
 		haveNewFrame := false
 		for {
@@ -155,16 +152,9 @@ func handleConn(c *rfb.Conn) {
 	for e := range c.Event {
 		//log.Infof("got event: %#v", e)
 		if ev, ok := e.(rfb.KeyEvent); ok {
-			log.Infof("keyboard  key:%d down:%d", ev.Key, ev.DownFlag)
-			if k, ok := keyboardMap[ev.Key]; ok {
-				log.Infof("keyboard mapped %s", k)
-				if ev.DownFlag == 1 {
-					robotgo.KeyTap(k)
-				}
-			} else {
-				if ev.DownFlag == 1 {
-					robotgo.UnicodeType(ev.Key)
-				}
+			err := keyboard.HandleKey(ev)
+			if err != nil {
+				log.Errorf("keyboard.HandleKey: %s", err)
 			}
 		}
 
