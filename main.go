@@ -127,7 +127,7 @@ func handleConn(c *rfb.Conn) {
 	closec := make(chan bool)
 	go func() {
 		slide := 0
-		tick := time.NewTicker(time.Second / 30)
+		tick := time.NewTicker(time.Second / 30) // X fps
 		defer tick.Stop()
 		haveNewFrame := false
 		for {
@@ -157,7 +157,7 @@ func handleConn(c *rfb.Conn) {
 		if ev, ok := e.(rfb.KeyEvent); ok {
 			log.Infof("keyboard  key:%d down:%d", ev.Key, ev.DownFlag)
 			if k, ok := keyboardMap[ev.Key]; ok {
-				log.Infof("keyboard mapped %d", k)
+				log.Infof("keyboard mapped %s", k)
 				if ev.DownFlag == 1 {
 					robotgo.KeyTap(k)
 				}
