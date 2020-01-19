@@ -1,9 +1,9 @@
 package keyboard
 
 import (
-	"github.com/bradfitz/rfbgo/rfb"
 	"github.com/go-vgo/robotgo"
 	log "github.com/sirupsen/logrus"
+	vnc "github.com/unistack-org/go-rfb"
 )
 
 var keys = []string{}
@@ -25,7 +25,7 @@ func addKey(k uint32) {
 		}
 	}
 	keys = append(keys, skey)
-	log.Infof("down %s", skey)
+	log.Debugf("down %s", skey)
 }
 
 func removeKey(k uint32) {
@@ -50,33 +50,34 @@ func isComboKey(k uint32) bool {
 	return false
 }
 
-func HandleKey(ev rfb.KeyEvent) error {
+func HandleEvent(ev *vnc.KeyEvent) error {
 
 	flag := "up"
-	if ev.DownFlag == 1 {
+	if ev.Down == 1 {
 		flag = "down"
 	}
-	log.Tracef("key:%d %s", ev.Key, flag)
+	log.Tracef("key:%s %s", ev.Key, flag)
 
 	// handle combo keys [ctrl, alt, shift, cmd]
-	if isComboKey(ev.Key) {
-		if ev.DownFlag == 1 {
-			addKey(ev.Key)
+	key := uint32(ev.Key)
+	if isComboKey(key) {
+		if ev.Down == 1 {
+			addKey(key)
 		} else {
-			removeKey(ev.Key)
+			removeKey(key)
 		}
 		return nil
 	}
 
 	// key up
-	if ev.DownFlag == 0 {
+	if ev.Down == 0 {
 		return nil
 	}
 
 	keyVal := string(rune(ev.Key))
 
 	robotgo.KeyTap(keyVal, keys)
-	log.Infof("key:%s keys:%v", keyVal, keys)
+	log.Debugf("key:%s keys:%v", keyVal, keys)
 
 	keys = []string{}
 
