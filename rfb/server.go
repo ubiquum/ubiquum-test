@@ -30,7 +30,7 @@ func Serve(host string) error {
 	chClient := make(chan vnc.ServerMessage)
 
 	im := image.NewRGBA(image.Rect(0, 0, width, height))
-	tick := time.NewTicker(time.Second / 30)
+	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 
 	cfg := &vnc.ServerConfig{
@@ -48,36 +48,41 @@ func Serve(host string) error {
 	go vnc.Serve(context.Background(), ln, cfg)
 	log.Infof("Listening on %s", host)
 
+	ready := false
+
 	// Process messages coming in on the ClientMessage channel.
 	for {
 		select {
 		case err := <-cfg.ErrorCh:
 			log.Errorf("VNC error: %s", err)
 		case <-tick.C:
+
+			if !ready {
+				continue
+			}
+
 			err := screen.Get(im)
 			if err != nil {
 				log.Errorf("Failed to grab screen: %s", err)
 				continue
 			}
-			// fmt.Printf("tick\n")
+
+			break
 		// case msg := <-chClient:
-		// 	switch msg.Type() {
-		// 	default:
-		// 		log.Printf("client: Received message type:%v msg:%v\n", msg.Type(), msg)
-		// 	}
+		// log.Printf("11 Received message type:%v msg:%v\n", msg.Type(), msg)
+		// break
 		case msg := <-chServer:
+			// log.Printf("22 Received message type:%v msg:%v\n", msg.Type(), msg)
 			switch msg.Type() {
 			case vnc.FramebufferUpdateRequestMsgType:
+
+				ready = true
 
 				ev, ok := msg.(*vnc.FramebufferUpdateRequest)
 				if !ok {
 					continue
 				}
-
 				log.Infof("FramebufferUpdateRequest %dx%d [%d,%d]", ev.Width, ev.Height, ev.X, ev.Y)
-
-				// r := image.Rect(int(ev.X), int(ev.Y), int(ev.X+ev.Width), int(ev.Y+ev.Height))
-				// im1 := im.SubImage(r)
 
 				colors := make([]vnc.Color, 0, 0)
 				for y := 0; y < height; y++ {
@@ -102,7 +107,7 @@ func Serve(host string) error {
 							},
 						}}}
 
-				log.Info("Sent response")
+				log.Print("sent screen")
 
 			case vnc.PointerEventMsgType:
 				ev, ok := msg.(*vnc.PointerEvent)
